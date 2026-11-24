@@ -1,0 +1,56 @@
+{
+  "version": 4,
+  "modelTiers": {
+    "economy": {
+      "model": "gpt-6-luna",
+      "defaultReasoningEffort": "medium"
+    },
+    "balanced": {
+      "model": "gpt-6.2-sol",
+      "defaultReasoningEffort": "high"
+    },
+    "flagship": {
+      "model": "gpt-6.2-astra",
+      "defaultReasoningEffort": "high"
+    },
+    "vision": {
+      "model": "gpt-6.1-terra",
+      "defaultReasoningEffort": "high"
+    }
+  },
+  "deepseek": {
+    "callCount": 0,
+    "totalTokens": 0,
+    "lastUsedAt": null,
+    "lastUsage": null,
+    "lastBalance": null
+  },
+  "accounts": {
+    "plus-1": {
+      "label": "Personal",
+      "defaultModel": "",
+      "lastUsedAt": null,
+      "callCount": 0,
+      "totalTokens": 0,
+      "lastUsage": null,
+      "lastQuota": null,
+      "lastSessionId": null,
+      "recentSessions": [],
+      "cooldownUntil": null,
+      "lastError": null
+    },
+    "plus-2": {
+      "label": "Backup",
+      "defaultModel": "",
+      "lastUsedAt": null,
+      "callCount": 0,
+      "totalTokens": 0,
+      "lastUsage": null,
+      "lastQuota": null,
+      "lastSessionId": null,
+      "recentSessions": [],
+      "cooldownUntil": null,
+      "lastError": null
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "codex-plus-mcp",
+  "version": "3.2.0",
+  "description": "Zero-dependency MCP server for orchestrating multiple isolated ChatGPT Plus (OpenAI Codex CLI) accounts with quota tracking, model tier routing, worktree isolation, image inputs, and optional DeepSeek web research.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/Mcdull581/codex-plus-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mcdull581/codex-plus-mcp.git"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bin": {
+    "codex-plus-mcp": "./src/server.mjs",
+    "codex-plus-setup": "./scripts/setup.mjs"
+  },
+  "scripts": {
+    "start": "node ./src/server.mjs",
+    "setup": "node ./scripts/setup.mjs",
+    "test": "node ./test/test-mcp.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "openai",
+    "codex",
+    "chatgpt-plus",
+    "multi-account",
+    "antigravity",
+    "deepseek",
+    "subagent"
+  ]
+}

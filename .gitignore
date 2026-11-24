@@ -1,0 +1,16 @@
+# Sensitive runtime credentials & local user data (NEVER commit!)
+accounts/
+accounts.json
+accounts.json.*.tmp
+deepseek.json
+auth.json
+.env
+.env.*
+!.env.example
+
+# Logs, temp files & OS artifacts
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+node_modules/

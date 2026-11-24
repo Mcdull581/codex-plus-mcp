@@ -1,0 +1,4 @@
+# Isolated Codex CLI config for a ChatGPT Plus account
+# Force file-based auth storage inside this account's CODEX_HOME (auth.json)
+# so multiple Plus accounts never overwrite each other in the OS keyring.
+cli_auth_credentials_store = "file"
