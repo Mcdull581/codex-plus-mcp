@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Codex Plus Multi-Account MCP Server v3.2.0 (Zero-Dependency Stdio JSON-RPC 2.0)
+ * Codex Plus Multi-Account MCP Server v3.3.0 (Zero-Dependency Stdio JSON-RPC 2.0)
  *
  * Open-source standalone edition:
  * - Isolated multi-account ChatGPT Plus pool via OpenAI Codex CLI (`CODEX_HOME` +
@@ -9,10 +9,11 @@
  * - Atomic, concurrency-safe registry mutations (`mutateRegistry`) with serial queue,
  *   fresh disk re-read, random temp file, and Windows EBUSY/EPERM rename retry.
  * - Cross-platform full process-tree cleanup (`taskkill /pid <pid> /t /f` on Windows).
- * - Supports image attachments (`-i`), isolated Git `--worktree` writes, tiered GPT
- *   model routing (`economy` / `balanced` / `flagship` / `vision`) with automatic
- *   CLI-default fallback, accurate official 429 cooldowns, 5-min TTL quota caching,
- *   and `recommendedAccount` ranking.
+ * - Supports image attachments (`-i ... -- -` clap-safe), native GPT image generation
+ *   & editing (`codex_generate_image` via `--enable image_generation`, 0 extra API fees),
+ *   isolated Git `--worktree` writes, tiered GPT model routing (`economy` / `balanced` /
+ *   `flagship` / `vision`) with automatic CLI-default fallback, accurate official 429
+ *   cooldowns, 5-min TTL quota caching, and `recommendedAccount` ranking.
  * - Optional DeepSeek extension (`deepseek_ask` / `deepseek_search`) with token usage
  *   and live `/user/balance` reporting (configured via DEEPSEEK_API_KEY or deepseek.json).
  */
@@ -24,7 +25,7 @@ import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 
-const SERVER_VERSION = "3.2.0";
+const SERVER_VERSION = "3.3.0";
 // Default runtime data home is outside the repository to prevent accidental secret commits
 const BASE_DIR = process.env.CODEX_BRIDGE_HOME || path.join(os.homedir(), ".codex-plus-mcp");
 const ACCOUNTS_DIR = path.join(BASE_DIR, "accounts");
@@ -692,6 +693,7 @@ function parseCodexJsonl(stdout) {
   let lastAgentText = "";
   let errorMessages = [];
   let usage = null;
+  const generatedImages = [];
 
   const lines = stdout.split(/\r?\n/);
   for (const rawLine of lines) {
@@ -704,8 +706,24 @@ function parseCodexJsonl(stdout) {
       if (ev.thread?.id && !sessionId) sessionId = ev.thread.id;
 
       if (ev.type === "item.completed" && ev.item) {
-        if (ev.item.type === "agent_message" && typeof ev.item.text === "string") {
+        const itemType = ev.item.type;
+        if (itemType === "agent_message" && typeof ev.item.text === "string") {
           lastAgentText = ev.item.text;
+        }
+        if (
+          itemType === "image_generation" ||
+          itemType === "imageGeneration" ||
+          itemType === "image_generation_call"
+        ) {
+          generatedImages.push({
+            id: ev.item.id || null,
+            status: ev.item.status || null,
+            savedPath: ev.item.saved_path || ev.item.savedPath || null,
+            revisedPrompt: ev.item.revised_prompt || ev.item.revisedPrompt || null,
+            transparentBackground:
+              ev.item.transparent_background ?? ev.item.transparentBackground ?? null,
+            failure: ev.item.failure || null,
+          });
         }
       }
       if (ev.type === "turn.completed" && ev.usage) {
@@ -720,7 +738,84 @@ function parseCodexJsonl(stdout) {
     }
   }
 
-  return { sessionId, lastAgentText, errorMessages, usage };
+  return { sessionId, lastAgentText, errorMessages, usage, generatedImages };
+}
+
+function scanGeneratedImagesDir(accountDir) {
+  const genRoot = path.join(accountDir, "generated_images");
+  const found = new Map();
+  if (!fs.existsSync(genRoot)) return found;
+
+  const walk = (dir) => {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const ent of entries) {
+      const full = path.join(dir, ent.name);
+      if (ent.isDirectory()) {
+        walk(full);
+      } else if (ent.isFile() && /\.(png|jpe?g|webp)$/i.test(ent.name)) {
+        try {
+          const st = fs.statSync(full);
+          if (st.size > 0) found.set(full, st.mtimeMs);
+        } catch {}
+      }
+    }
+  };
+  walk(genRoot);
+  return found;
+}
+
+function copyGeneratedImagesToTarget(sourcePaths, outputPath, workingDir) {
+  if (!sourcePaths.length) return [];
+  const copied = [];
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+
+  let targetDir = null;
+  let explicitFileBase = null;
+  let explicitFileExt = ".png";
+
+  if (typeof outputPath === "string" && outputPath.trim()) {
+    const absOut = path.resolve(outputPath.trim());
+    const ext = path.extname(absOut);
+    if (ext && /\.(png|jpe?g|webp)$/i.test(ext)) {
+      targetDir = path.dirname(absOut);
+      explicitFileBase = path.basename(absOut, ext);
+      explicitFileExt = ext;
+    } else {
+      targetDir = absOut;
+    }
+  } else if (workingDir && fs.existsSync(workingDir)) {
+    targetDir = path.join(path.resolve(workingDir), "generated_images");
+  }
+
+  if (!targetDir) {
+    return sourcePaths.map((src) => ({ source: src, saved: src }));
+  }
+
+  fs.mkdirSync(targetDir, { recursive: true });
+  sourcePaths.forEach((src, idx) => {
+    const srcExt = path.extname(src) || ".png";
+    let destName;
+    if (explicitFileBase) {
+      destName =
+        idx === 0
+          ? `${explicitFileBase}${explicitFileExt}`
+          : `${explicitFileBase}-${idx + 1}${explicitFileExt}`;
+    } else {
+      destName =
+        idx === 0
+          ? `gpt-image-${timestamp}${srcExt}`
+          : `gpt-image-${timestamp}-${idx + 1}${srcExt}`;
+    }
+    const destPath = path.join(targetDir, destName);
+    fs.copyFileSync(src, destPath);
+    copied.push({ source: src, saved: destPath });
+  });
+  return copied;
 }
 
 function detectRateLimit(text) {
@@ -1349,18 +1444,29 @@ function buildCodexCliArgs({
   chosenModel,
   chosenEffort,
   imagePaths,
+  enableFeatures = [],
   tmpOutFile,
 }) {
   const cliArgs = [];
   if (resumeSessionId !== null) {
     cliArgs.push("exec", "resume", "--json", "--skip-git-repo-check", "-o", tmpOutFile);
+    if (resumeSessionId === "__LAST__") {
+      cliArgs.push("--last");
+    }
     if (chosenModel) cliArgs.push("-m", chosenModel);
     if (chosenEffort) cliArgs.push("-c", `model_reasoning_effort="${chosenEffort}"`);
+    for (const feat of enableFeatures) {
+      cliArgs.push("--enable", feat);
+    }
     for (const img of imagePaths) {
       cliArgs.push("-i", img);
     }
+    // Prevent clap's greedy num_args=1.. on -i from swallowing positional args / "-" (Codex Issue #40695)
+    if (imagePaths.length > 0) {
+      cliArgs.push("--");
+    }
     if (resumeSessionId === "__LAST__") {
-      cliArgs.push("--last", "-");
+      cliArgs.push("-");
     } else {
       cliArgs.push(resumeSessionId, "-");
     }
@@ -1389,8 +1495,15 @@ function buildCodexCliArgs({
     if (chosenEffort) {
       cliArgs.push("-c", `model_reasoning_effort="${chosenEffort}"`);
     }
+    for (const feat of enableFeatures) {
+      cliArgs.push("--enable", feat);
+    }
     for (const img of imagePaths) {
       cliArgs.push("-i", img);
+    }
+    // Prevent clap's greedy num_args=1.. on -i from swallowing "-" (Codex Issue #40695)
+    if (imagePaths.length > 0) {
+      cliArgs.push("--");
     }
     cliArgs.push("-");
   }
@@ -1410,6 +1523,11 @@ async function runHeadlessCodex({
   reasoning_effort = "",
   timeout_seconds,
   resumeSessionId = null,
+  enableFeatures = [],
+  forceQuotaRefresh = false,
+  collectGeneratedImages = false,
+  outputPath = null,
+  providerTag = "codex-plus",
 }) {
   const regSnap = loadRegistrySync();
   const resolvedKey = resolveAccountKey(regSnap, account);
@@ -1478,6 +1596,8 @@ async function runHeadlessCodex({
   const effectiveSandbox = useWorktree || sandbox === "workspace-write" ? "workspace-write" : "read-only";
   const tmpOutFile = path.join(os.tmpdir(), `codex-out-${crypto.randomUUID()}.txt`);
   const prevQuota = metaSnap.lastQuota || null;
+  const beforeGenImages = collectGeneratedImages ? scanGeneratedImagesDir(accountDir) : null;
+  const runStartMs = Date.now();
 
   try {
     let activeModel = resolvedTier.model;
@@ -1496,6 +1616,7 @@ async function runHeadlessCodex({
         chosenModel: modelToUse,
         chosenEffort: resolvedTier.reasoningEffort,
         imagePaths: imgCheck.paths,
+        enableFeatures,
         tmpOutFile,
       });
       return runCodexProcess({
@@ -1646,7 +1767,7 @@ async function runHeadlessCodex({
     let quotaCached = true;
     let quotaDelta = null;
 
-    if (shouldRefreshQuota(prevQuota, turnTokens)) {
+    if (forceQuotaRefresh || shouldRefreshQuota(prevQuota, turnTokens)) {
       const liveQuota = await fetchLiveRateLimits(accountDir, QUOTA_QUERY_TIMEOUT_MS);
       if (liveQuota) {
         if (
@@ -1664,6 +1785,33 @@ async function runHeadlessCodex({
         }
         effectiveQuota = liveQuota;
         quotaCached = false;
+      }
+    }
+
+    let copiedImages = [];
+    let imageFailures = [];
+    let revisedPrompts = [];
+    if (collectGeneratedImages || (parsed.generatedImages && parsed.generatedImages.length > 0)) {
+      const sourcePathSet = new Set();
+      for (const item of parsed.generatedImages || []) {
+        if (item.failure) imageFailures.push(item.failure);
+        if (item.revisedPrompt) revisedPrompts.push(item.revisedPrompt);
+        if (item.savedPath && fs.existsSync(item.savedPath)) {
+          sourcePathSet.add(path.resolve(item.savedPath));
+        }
+      }
+      if (collectGeneratedImages) {
+        const afterGenImages = scanGeneratedImagesDir(accountDir);
+        for (const [imgFile, mtimeMs] of afterGenImages.entries()) {
+          const prevMtime = beforeGenImages?.get(imgFile);
+          if (prevMtime === undefined || mtimeMs > prevMtime || mtimeMs >= runStartMs - 2000) {
+            sourcePathSet.add(path.resolve(imgFile));
+          }
+        }
+      }
+      const uniqueSources = [...sourcePathSet];
+      if (uniqueSources.length > 0) {
+        copiedImages = copyGeneratedImagesToTarget(uniqueSources, outputPath, working_dir);
       }
     }
 
@@ -1692,12 +1840,15 @@ async function runHeadlessCodex({
     });
 
     const metaBlock = JSON.stringify({
-      provider: "codex-plus",
+      provider: providerTag,
       account: resolvedKey,
       label: metaSnap.label,
       mode: resumeSessionId ? "resume" : effectiveSandbox,
       ...(useWorktree ? { worktree: true } : {}),
       ...(imgCheck.paths.length > 0 ? { imageCount: imgCheck.paths.length } : {}),
+      ...(copiedImages.length > 0 ? { generatedFiles: copiedImages.map((c) => c.saved) } : {}),
+      ...(revisedPrompts.length > 0 ? { revisedPrompts } : {}),
+      ...(imageFailures.length > 0 ? { imageFailures } : {}),
       tier: resolvedTier.tier || "(未指定)",
       model: activeModel || "(CLI默认)",
       ...(modelFallback ? { modelFallback: true, originalRequestedModel } : {}),
@@ -1711,11 +1862,40 @@ async function runHeadlessCodex({
       quotaDelta,
     });
 
+    if (collectGeneratedImages && copiedImages.length === 0) {
+      const failDetail =
+        imageFailures.length > 0
+          ? `图片生成失败：${JSON.stringify(imageFailures)}`
+          : "未检测到新生成的图片文件（请检查该账号是否支持 image_generation，或模型是否拒绝了提示词）。";
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `<!-- subagent_meta:${metaBlock} -->\n${failDetail}\n\nCodex 返回说明：\n${finalMessage || "（无）"}`,
+          },
+        ],
+      };
+    }
+
+    const bodyLines = [];
+    if (copiedImages.length > 0) {
+      bodyLines.push("### 已生成图片文件");
+      copiedImages.forEach((c, idx) => {
+        bodyLines.push(`- 图片 ${idx + 1}：\`${c.saved}\``);
+      });
+      if (revisedPrompts.length > 0) {
+        bodyLines.push(`- 实际生图提示词：${revisedPrompts[0]}`);
+      }
+      bodyLines.push("");
+    }
+    bodyLines.push(finalMessage || "（Codex 返回空内容）");
+
     return {
       content: [
         {
           type: "text",
-          text: `<!-- subagent_meta:${metaBlock} -->\n${finalMessage || "（Codex 返回空内容）"}`,
+          text: `<!-- subagent_meta:${metaBlock} -->\n${bodyLines.join("\n")}`,
         },
       ],
     };
@@ -1724,6 +1904,53 @@ async function runHeadlessCodex({
       if (fs.existsSync(tmpOutFile)) fs.unlinkSync(tmpOutFile);
     } catch {}
   }
+}
+
+async function handleGenerateImage(args = {}) {
+  const promptText = typeof args.prompt === "string" ? args.prompt.trim() : "";
+  if (!promptText) {
+    return { isError: true, content: [{ type: "text", text: "参数 prompt 不能为空。" }] };
+  }
+
+  const refImages = args.reference_images ?? args.images ?? null;
+  const imgCheck = validateImages(refImages);
+  if (!imgCheck.ok) {
+    return { isError: true, content: [{ type: "text", text: imgCheck.error }] };
+  }
+
+  const sizeHint = typeof args.size === "string" && args.size.trim() ? args.size.trim() : "auto";
+  const qualityHint = typeof args.quality === "string" && args.quality.trim() ? args.quality.trim() : "high";
+  const transparent = Boolean(args.transparent_background);
+
+  const instructionLines = [
+    "请使用内置的 image_generation 工具直接生成图片，不要编写脚本、不要修改工作区文件、也不要只输出文字描述。",
+    imgCheck.paths.length > 0
+      ? `我已通过命令行附带了 ${imgCheck.paths.length} 张参考图/原图，请先仔细阅读这些图片，并基于它们按下方要求进行编辑或重绘。`
+      : "",
+    `生成要求：${promptText}`,
+    sizeHint !== "auto" ? `尺寸/比例要求：${sizeHint}` : "",
+    qualityHint !== "auto" ? `画质要求：${qualityHint}` : "",
+    transparent ? "背景要求：透明背景（transparent background）。" : "",
+    "生成完成后，请简明回复你对成图构图与细节的 2–3 句中文说明即可。",
+  ].filter(Boolean);
+
+  return runHeadlessCodex({
+    account: args.account,
+    prompt: instructionLines.join("\n"),
+    topic: `GPT生图: ${promptText.slice(0, 28)}`,
+    working_dir: args.working_dir,
+    sandbox: "read-only",
+    images: imgCheck.paths.length > 0 ? imgCheck.paths : null,
+    tier: args.tier || null,
+    model: args.model,
+    reasoning_effort: args.reasoning_effort || "medium",
+    timeout_seconds: args.timeout_seconds || DEFAULT_TIMEOUT_SEC,
+    enableFeatures: ["image_generation"],
+    forceQuotaRefresh: true,
+    collectGeneratedImages: true,
+    outputPath: args.output_path || null,
+    providerTag: "codex-plus-image",
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1928,6 +2155,69 @@ const TOOLS = [
     },
   },
   {
+    name: "codex_generate_image",
+    description:
+      "使用指定的 ChatGPT Plus 账号通过 Codex CLI 原生 --enable image_generation 生成或编辑图片（零额外 API 费用，走 Plus 订阅额度）。支持传 reference_images 先读图再改图/图生图、透明底、自定义保存路径 output_path，并自动刷新真实 Plus 额度。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        account: {
+          type: "string",
+          description: "必填：已选定的 Plus 账号 ID 或自定义备注名（如 plus-1 或 personal）。",
+        },
+        prompt: {
+          type: "string",
+          description: "必填：详细的生图或改图提示词（建议写清主体、构图、风格、文字标签与配色）。",
+        },
+        output_path: {
+          type: "string",
+          description: "可选：目标图片文件绝对路径或目标目录路径；不填时若提供了 working_dir 则默认存到 working_dir/generated_images/。",
+        },
+        reference_images: {
+          type: "array",
+          items: { type: "string" },
+          description: "可选：本地参考图/原图绝对路径数组（先让 GPT 读图，再基于原图做修改、重绘或风格迁移）。",
+        },
+        working_dir: {
+          type: "string",
+          description: "可选：工作区目录绝对路径。",
+        },
+        size: {
+          type: "string",
+          description: "可选：目标尺寸或比例提示（如 1024x1024、1536x1024、1024x1536、16:9，默认 auto）。",
+        },
+        quality: {
+          type: "string",
+          enum: ["low", "medium", "high", "auto"],
+          description: "可选：画质档位（默认 high）。",
+        },
+        transparent_background: {
+          type: "boolean",
+          description: "可选：是否要求透明背景（默认 false）。",
+        },
+        tier: {
+          type: "string",
+          enum: ["economy", "balanced", "flagship", "vision"],
+          description: "可选：驱动生图工具的代理模型档位（通常留空跟随 CLI 默认即可）。",
+        },
+        model: {
+          type: "string",
+          description: "可选：显式指定驱动模型名。",
+        },
+        reasoning_effort: {
+          type: "string",
+          enum: ["low", "medium", "high", "xhigh"],
+          description: "可选：驱动代理推理深度（默认 medium，减少生图等待时间）。",
+        },
+        timeout_seconds: {
+          type: "number",
+          description: "可选：超时秒数（默认 300）。",
+        },
+      },
+      required: ["account", "prompt"],
+    },
+  },
+  {
     name: "deepseek_ask",
     description:
       "调用 DeepSeek API（低成本批量预读、资料降噪、实体关系抽取或深度推理备胎），支持 flash（deepseek-flash）和 pro（deepseek-v4-pro）两档及可选服务端联网搜索，返回与 GPT 一致的 Token 用量与真实账户余额。",
@@ -2110,6 +2400,8 @@ async function handleRequest(msg) {
           reasoning_effort: toolArgs.reasoning_effort || "high",
           timeout_seconds: toolArgs.timeout_seconds,
         });
+      } else if (toolName === "codex_generate_image") {
+        result = await handleGenerateImage(toolArgs);
       } else if (toolName === "deepseek_ask") {
         result = await handleDeepSeekAsk(toolArgs);
       } else if (toolName === "deepseek_search") {

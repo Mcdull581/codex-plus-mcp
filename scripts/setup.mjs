@@ -23,7 +23,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, "..");
 
-const SERVER_VERSION = "3.2.0";
+const SERVER_VERSION = "3.3.0";
 
 const DEFAULT_MODEL_TIERS = {
   economy: { model: "gpt-6-luna", defaultReasoningEffort: "medium" },
@@ -306,14 +306,14 @@ function installAntigravityPlugin(targetDir, serverPath) {
 
   const pluginJson = {
     name: "codex-plus",
-    displayName: "Codex Plus (Multi-Account + DeepSeek)",
+    displayName: "Codex Plus (Multi-Account + ImageGen + DeepSeek)",
     description:
-      "Orchestrate multiple isolated ChatGPT Plus (OpenAI Codex CLI) accounts with quota tracking, model tier routing, image inputs, Git worktree isolation, and optional DeepSeek research.",
+      "Orchestrate multiple isolated ChatGPT Plus (OpenAI Codex CLI) accounts with quota tracking, model tier routing, vision & native image generation/editing, Git worktree isolation, and optional DeepSeek research.",
     version: SERVER_VERSION,
     suggestedPrompts: [
       "查看我所有 ChatGPT Plus 账号与 DeepSeek 的实时剩余额度",
+      "让 GPT 阅读这张图片并按我的要求重新生成一张高清配图",
       "先全网调研可借鉴方案存入缓存区，再与 GPT 背靠背出方案并画架构图",
-      "选推荐 Plus 账号对当前项目做两阶段分级代码审查",
     ],
   };
   writeUtf8NoBom(path.join(pluginDir, "plugin.json"), JSON.stringify(pluginJson, null, 2) + "\n");

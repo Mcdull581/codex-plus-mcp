@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620" role="img" aria-label="Codex Plus MCP Architecture Diagram">
+  <defs>
+    <linearGradient id="archBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1120"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <marker id="arrowCyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrowEmerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#34D399"/>
+    </marker>
+    <marker id="arrowViolet" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#A78BFA"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#60A5FA"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="620" rx="18" fill="url(#archBg)"/>
+  <rect x="1" y="1" width="1198" height="618" rx="17" fill="none" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <text x="40" y="42" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="700" fill="#F8FAFC">
+    System Architecture · Multi-Account Isolation &amp; Tiered Orchestration
+  </text>
+  <text x="1160" y="42" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#64748B">
+    Stdio JSON-RPC 2.0 · Zero External Packages
+  </text>
+
+  <!-- Layer 1: MCP Clients -->
+  <rect x="40" y="64" width="1120" height="92" rx="14" fill="#0F172A" stroke="#38BDF8" stroke-opacity="0.45" stroke-width="1.2"/>
+  <text x="62" y="88" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="700" fill="#38BDF8">LAYER 1 · MCP HOST CLIENTS (ORCHESTRATORS)</text>
+
+  <g transform="translate(62, 102)" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <rect x="0" y="0" width="250" height="40" rx="9" fill="#1E293B" stroke="#38BDF8" stroke-opacity="0.6"/>
+    <text x="125" y="25" text-anchor="middle" font-size="13.5" font-weight="600" fill="#F1F5F9">Google Antigravity 2.0 Plugin</text>
+
+    <rect x="276" y="0" width="250" height="40" rx="9" fill="#1E293B" stroke="#475569"/>
+    <text x="401" y="25" text-anchor="middle" font-size="13.5" font-weight="600" fill="#E2E8F0">Claude Code / Desktop</text>
+
+    <rect x="552" y="0" width="250" height="40" rx="9" fill="#1E293B" stroke="#475569"/>
+    <text x="677" y="25" text-anchor="middle" font-size="13.5" font-weight="600" fill="#E2E8F0">Cursor / Windsurf IDE</text>
+
+    <rect x="828" y="0" width="248" height="40" rx="9" fill="#1E293B" stroke="#475569"/>
+    <text x="952" y="25" text-anchor="middle" font-size="13.5" font-weight="600" fill="#E2E8F0">Any Stdio MCP Client</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="600" y1="156" x2="600" y2="196" stroke="#38BDF8" stroke-width="2.2" marker-end="url(#arrowCyan)"/>
+  <rect x="470" y="163" width="260" height="22" rx="11" fill="#0B1120" stroke="#38BDF8" stroke-opacity="0.4"/>
+  <text x="600" y="178" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#7DD3FC">MCP Stdio · 8 Tools · subagent_meta</text>
+
+  <!-- Layer 2: Codex Plus MCP Core -->
+  <rect x="40" y="198" width="1120" height="148" rx="14" fill="#0F172A" stroke="#818CF8" stroke-opacity="0.55" stroke-width="1.5"/>
+  <text x="62" y="223" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="700" fill="#A5B4FC">LAYER 2 · CODEX PLUS MCP CORE (src/server.mjs · Pure Node.js ESM)</text>
+
+  <g transform="translate(62, 238)" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <rect x="0" y="0" width="204" height="90" rx="10" fill="#1E293B" stroke="#818CF8" stroke-opacity="0.45"/>
+    <text x="14" y="24" font-size="13" font-weight="700" fill="#C7D2FE">Tier &amp; Effort Router</text>
+    <text x="14" y="45" font-size="11.5" fill="#94A3B8">economy / balanced</text>
+    <text x="14" y="62" font-size="11.5" fill="#94A3B8">flagship / vision</text>
+    <text x="14" y="79" font-size="11.5" fill="#34D399">Auto CLI-default fallback</text>
+
+    <rect x="218" y="0" width="204" height="90" rx="10" fill="#1E293B" stroke="#34D399" stroke-opacity="0.45"/>
+    <text x="232" y="24" font-size="13" font-weight="700" fill="#6EE7B7">Atomic Registry</text>
+    <text x="232" y="45" font-size="11.5" fill="#94A3B8">mutateRegistry queue</text>
+    <text x="232" y="62" font-size="11.5" fill="#94A3B8">EBUSY/EPERM retry</text>
+    <text x="232" y="79" font-size="11.5" fill="#94A3B8">15 sessions / account</text>
+
+    <rect x="436" y="0" width="204" height="90" rx="10" fill="#1E293B" stroke="#FBBF24" stroke-opacity="0.45"/>
+    <text x="450" y="24" font-size="13" font-weight="700" fill="#FDE68A">Quota &amp; 429 Engine</text>
+    <text x="450" y="45" font-size="11.5" fill="#94A3B8">5-min TTL quota cache</text>
+    <text x="450" y="62" font-size="11.5" fill="#94A3B8">Official 429 resetsAt</text>
+    <text x="450" y="79" font-size="11.5" fill="#94A3B8">recommendedAccount</text>
+
+    <rect x="654" y="0" width="204" height="90" rx="10" fill="#1E293B" stroke="#F472B6" stroke-opacity="0.45"/>
+    <text x="668" y="24" font-size="13" font-weight="700" fill="#F9A8D4">Safety &amp; Multimodal</text>
+    <text x="668" y="45" font-size="11.5" fill="#94A3B8">Default read-only</text>
+    <text x="668" y="62" font-size="11.5" fill="#94A3B8">Git --worktree guard</text>
+    <text x="668" y="79" font-size="11.5" fill="#94A3B8">-i Vision &amp; Image Gen</text>
+
+    <rect x="872" y="0" width="204" height="90" rx="10" fill="#1E293B" stroke="#60A5FA" stroke-opacity="0.45"/>
+    <text x="886" y="24" font-size="13" font-weight="700" fill="#93C5FD">Process Hygiene</text>
+    <text x="886" y="45" font-size="11.5" fill="#94A3B8">Win taskkill /t /f tree</text>
+    <text x="886" y="62" font-size="11.5" fill="#94A3B8">Strips OPENAI_API_KEY</text>
+    <text x="886" y="79" font-size="11.5" fill="#94A3B8">UTF-8 stdin prompt pipe</text>
+  </g>
+
+  <!-- Arrows 2 -> 3 -->
+  <line x1="390" y1="346" x2="390" y2="394" stroke="#34D399" stroke-width="2.2" marker-end="url(#arrowEmerald)"/>
+  <rect x="240" y="356" width="300" height="22" rx="11" fill="#0B1120" stroke="#34D399" stroke-opacity="0.45"/>
+  <text x="390" y="371" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#6EE7B7">CODEX_HOME=accounts/&lt;id&gt; · codex exec / app-server</text>
+
+  <line x1="955" y1="346" x2="955" y2="394" stroke="#60A5FA" stroke-width="2.2" stroke-dasharray="6,4" marker-end="url(#arrowBlue)"/>
+  <rect x="820" y="356" width="270" height="22" rx="11" fill="#0B1120" stroke="#60A5FA" stroke-opacity="0.45"/>
+  <text x="955" y="371" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#93C5FD">Optional HTTPS · /chat + /search + /balance</text>
+
+  <!-- Layer 3A: Isolated ChatGPT Plus Pool -->
+  <rect x="40" y="396" width="720" height="196" rx="14" fill="#0F172A" stroke="#34D399" stroke-opacity="0.55" stroke-width="1.4"/>
+  <text x="62" y="422" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="700" fill="#34D399">LAYER 3A · ISOLATED CHATGPT PLUS POOL (~/.codex-plus-mcp · OUTSIDE GIT REPO)</text>
+
+  <g transform="translate(62, 438)" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <rect x="0" y="0" width="214" height="134" rx="10" fill="#1E293B" stroke="#34D399" stroke-opacity="0.5"/>
+    <text x="16" y="26" font-size="13.5" font-weight="700" fill="#ECFDF5">plus-1 (Personal)</text>
+    <text x="16" y="48" font-family="ui-monospace, monospace" font-size="11" fill="#6EE7B7">config.toml (file store)</text>
+    <text x="16" y="67" font-family="ui-monospace, monospace" font-size="11" fill="#94A3B8">auth.json (OAuth)</text>
+    <text x="16" y="86" font-family="ui-monospace, monospace" font-size="11" fill="#94A3B8">sessions/ + images/</text>
+    <rect x="16" y="100" width="182" height="20" rx="6" fill="#064E3B"/>
+    <text x="107" y="114" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#A7F3D0">5h: 4% · 7d: 12% ★</text>
+
+    <rect x="230" y="0" width="214" height="134" rx="10" fill="#1E293B" stroke="#38BDF8" stroke-opacity="0.45"/>
+    <text x="246" y="26" font-size="13.5" font-weight="700" fill="#F0F9FF">plus-2 (Work)</text>
+    <text x="246" y="48" font-family="ui-monospace, monospace" font-size="11" fill="#7DD3FC">config.toml (file store)</text>
+    <text x="246" y="67" font-family="ui-monospace, monospace" font-size="11" fill="#94A3B8">auth.json (OAuth)</text>
+    <text x="246" y="86" font-family="ui-monospace, monospace" font-size="11" fill="#94A3B8">sessions/ + images/</text>
+    <rect x="246" y="100" width="182" height="20" rx="6" fill="#0C4A6E"/>
+    <text x="337" y="114" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#BAE6FD">5h: 18% · 7d: 26%</text>
+
+    <rect x="460" y="0" width="216" height="134" rx="10" fill="#1E293B" stroke="#A78BFA" stroke-opacity="0.45"/>
+    <text x="476" y="26" font-size="13.5" font-weight="700" fill="#F5F3FF">plus-N (Backup)</text>
+    <text x="476" y="48" font-family="ui-monospace, monospace" font-size="11" fill="#C4B5FD">config.toml (file store)</text>
+    <text x="476" y="67" font-family="ui-monospace, monospace" font-size="11" fill="#94A3B8">auth.json (OAuth)</text>
+    <text x="476" y="86" font-family="ui-monospace, monospace" font-size="11" fill="#94A3B8">sessions/ + images/</text>
+    <rect x="476" y="100" width="184" height="20" rx="6" fill="#4C1D95"/>
+    <text x="568" y="114" text-anchor="middle" font-family="ui-monospace, monospace" font-size="10.5" fill="#DDD6FE">429 Auto-Failover</text>
+  </g>
+
+  <!-- Layer 3B: Optional DeepSeek Extension -->
+  <rect x="780" y="396" width="380" height="196" rx="14" fill="#0F172A" stroke="#60A5FA" stroke-opacity="0.55" stroke-width="1.4" stroke-dasharray="6,4"/>
+  <text x="802" y="422" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11.5" font-weight="700" fill="#60A5FA">LAYER 3B · OPTIONAL DEEPSEEK RESEARCH</text>
+
+  <g transform="translate(802, 438)" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <rect x="0" y="0" width="336" height="60" rx="10" fill="#1E293B" stroke="#60A5FA" stroke-opacity="0.45"/>
+    <text x="16" y="24" font-size="13" font-weight="700" fill="#DBEAFE">deepseek_ask (flash / pro)</text>
+    <text x="16" y="45" font-size="11.5" fill="#94A3B8">1M pre-reading · cache hit tokens · web tools</text>
+
+    <rect x="0" y="72" width="336" height="62" rx="10" fill="#1E293B" stroke="#60A5FA" stroke-opacity="0.45"/>
+    <text x="16" y="96" font-size="13" font-weight="700" fill="#DBEAFE">deepseek_search + /user/balance</text>
+    <text x="16" y="117" font-size="11.5" fill="#94A3B8">Prior-art fact sheets · live CNY/USD balance</text>
+  </g>
+</svg>

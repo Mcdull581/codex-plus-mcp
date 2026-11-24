@@ -1,11 +1,11 @@
-# Codex Plus Multi-Model Collaboration Rule v3.2
+# Codex Plus Multi-Model Collaboration Rule v3.3
 
 ## 1. 角色边界与分层编排（DeerFlow + Superpowers）
 - **简单任务直出**：日常问答、文案/交互/前端、小改动（`<50` 行、修简单问题、紧耦合联调）由主 Agent 直接完成，不走重流程、不浪费 GPT 额度。
 - **复杂工程/科研/架构任务 5 阶段**：
   0. **前置全网调研与参考缓存**：动工前先用 `deepseek_search` / `deepseek_ask(tier="flash", web_search=true)` 或内置联网搜索搜集现成开源方案、论文与坑点，将可借鉴内容压缩存入会话缓存区（`scratch/research-cache-<topic>.md`），对照用户个人要求决定「复用 / 改造 / 舍弃」后再进入规划。
   1. **Spec 对齐与背靠背出稿**：大方案/建模框架/架构决策让主 Agent 与 GPT 独立出稿（只给 GPT 用户原话 + 客观背景/缓存事实包，不带主 Agent 草稿或倾向）；核实合并后写明共识、采纳项与分歧点（各有道理的摆给用户拍板）。
-  2. **按 `tier` 分级派活**：`economy`（`gpt-6-luna` 轻量抽取/日志）、`balanced`（`gpt-6.2-sol` 日常代码/审查）、`flagship`（`gpt-6.2-astra` 科研推导/建模核心/疑难 Debug/高危安全）、`vision`（`gpt-6.1-terra` + `images` 传图核验）。独立大模块需写盘时在 Git 仓库开启 `worktree: true`，其余默认静默 `sandbox: "read-only"`。
+  2. **按 `tier` 分级派活与读图/生图闭环**：`economy`（`gpt-6-luna` 轻量抽取/日志）、`balanced`（`gpt-6.2-sol` 日常代码/审查）、`flagship`（`gpt-6.2-astra` 科研推导/建模核心/疑难 Debug/高危安全）、`vision`（`gpt-6.1-terra` + `images` 传图核验）；需要 GPT 文生图或读图改图时调 `codex_generate_image`（原生 `--enable image_generation`，0 额外 API 费、支持 `reference_images` 与 `output_path`，生图耗额约 3–5× 普通轮次，生成后读图验收）。独立大模块需写盘时在 Git 仓库开启 `worktree: true`，其余默认静默 `sandbox: "read-only"`。
   3. **两阶段分级审查**：先查 Spec 合规，再查质量——仅 P0 阻断级（算错/丢数据/越权/崩溃/核心逻辑硬伤，且给出复现路径）挡交付，P1 建议级只记录。最多审 2 轮，仍有分歧交用户拍板。推理深度默认 `"high"`，核心科研证明/数学建模/资金权限安全升 `"xhigh"`。
   4. **收活必核实与同类改全**：核对 diff/推导/测试后再翻译成人话汇报（先给结论与建议，不甩原始长报告）；发现一类错时同类位置一次补全，能写成检查/测试守住的直接写检查。
 

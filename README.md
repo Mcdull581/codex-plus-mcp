@@ -1,98 +1,175 @@
-# Codex Plus MCP
+<div align="center">
 
-[![Node.js >= 20](https://img.shields.io/badge/Node.js-%3E%3D20-339933)]()
-[![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-blue)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/hero-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/hero-light.svg">
+  <img alt="Codex Plus MCP Banner" src="./assets/hero-dark.svg" width="100%">
+</picture>
 
-一个**零第三方依赖**、跨平台（Windows / macOS / Linux）的 **Model Context Protocol (MCP)** 服务端，让你在 **Google Antigravity / Claude Code / Cursor** 等任意 MCP 客户端中，把**多个官方 ChatGPT Plus 订阅账号**（通过官方无头 `@openai/codex` CLI）封装为可自主调度的严谨子 Agent，并可选集成 **DeepSeek API** 做低成本全网调研与文档预读。
+<br/>
+
+[![Version](https://img.shields.io/badge/version-v3.3.0-0EA5E9?style=for-the-badge)](https://github.com/Mcdull581/codex-plus-mcp)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-6366F1?style=for-the-badge)](#)
+[![Platforms](https://img.shields.io/badge/OS-Windows%20%7C%20macOS%20%7C%20Linux-475569?style=for-the-badge)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
+
+<p>
+  <strong>将多个官方 ChatGPT Plus 订阅账号封装为零依赖、隔离无串号的 MCP 严谨子 Agent 池</strong><br/>
+  <sub>原生无头 Codex CLI · 真实 5h/7d 额度监测 · 分级路由 · 读图与原生生图改图 · Git Worktree · 可选 DeepSeek 调研</sub>
+</p>
+
+<p>
+  <a href="#为什么选择-codex-plus-mcp对比一览">方案对比</a> ·
+  <a href="#系统架构与编排工作流">架构图</a> ·
+  <a href="#快速开始交互式安装与账号授权">快速开始</a> ·
+  <a href="#8-个内置-mcp-工具">工具参考</a> ·
+  <a href="#模型分级路由">分级路由</a> ·
+  <a href="#隐私与安全保障">安全机制</a>
+</p>
+
+</div>
 
 ---
 
-## 核心特性
+## 为什么选择 Codex Plus MCP？（对比一览）
 
-- **多 Plus 账号彻底隔离（零串号）**：为每个账号独立分配 `CODEX_HOME` 与 `cli_auth_credentials_store = "file"`，每个账号拥有独立的 `auth.json` 和会话目录，不污染系统默认 `~/.codex`；调用时自动清除 `OPENAI_API_KEY`，确保 100% 走 Plus 订阅额度而非 API 计费。
-- **交互式安装与授权向导（`npm run setup`）**：安装过程中引导你逐个录入账号 ID、备注标签、可选默认模型，依次拉起官方浏览器完成 OAuth 授权，并支持可选录入 DeepSeek API Key 与一键接入 Antigravity 2.0 Plugin。
-- **精准额度监测与智能荐号**：
-  - 每次调用解析精确 Token 消耗（输入 / 缓存命中 / 输出）；
-  - 通过官方 `codex app-server`（`account/rateLimits/read`）获取真实 **5 小时窗口 / 7 天周额度百分比与重置时间**（5 分钟 TTL 缓存提速，429 限流时自动采用官方真实 `resetsAt` 作为冷却截止时间）；
-  - `codex_list_accounts` 按余量自动排序并输出 `recommendedAccount`。
-- **模型分级路由 + 安全回退**：支持 `tier: "economy" | "balanced" | "flagship" | "vision"` 与 `reasoning_effort: "low" | "medium" | "high" | "xhigh"`；若账号不支持某个模型 slug，自动回退至 Codex CLI 默认模型重试并标记 `modelFallback: true`。
-- **工程与科研增强**：支持本地图片附件（`-i` 传图核验论文图表/公式/截图）、独立 Git `--worktree` 隔离写入、多会话自动追踪（每号保留最近 15 条命名线程，无需用户记忆 `session_id`）、Windows 完整进程树清理与原子并发安全写盘。
-- **可选 DeepSeek 扩展（统一用量与余额汇报）**：配置 `DEEPSEEK_API_KEY` 或本地 `deepseek.json` 后解锁 `deepseek_ask`（`deepseek-flash` / `deepseek-v4-pro` + 可选联网搜索）与 `deepseek_search`，同样汇报精确 Token 与 `/user/balance` 真实余额；不配置不影响任何 GPT/Codex 功能。
+在 Antigravity、Claude Code、Cursor 等主控 Agent 中接入 GPT 时，传统方式各有硬伤。下表直观对比 4 种常见方案：
+
+| 对比维度 | 原生手敲 `codex exec` | OpenAI API Key MCP | 网页爬虫桥接 (`webgpt2mcp`) | **Codex Plus MCP（本项目）** |
+| :--- | :---: | :---: | :---: | :---: |
+| **复用 Plus 订阅（0 额外 API 费）** | ✅ 单号 | ❌ 按 Token 另付高额 API 费 | ⚠️ 依赖网页 Cookie | ✅ **N 个 Plus 账号池，自动剥离 `OPENAI_API_KEY`** |
+| **多账号并发隔离（零串号）** | ❌ 共用 `~/.codex` 互盖 | — | ❌ 易冲突 | ✅ **独立 `CODEX_HOME` + 文件凭证存储** |
+| **真实 5h / 7d 官方额度 & 429 精准冷却** | ❌ 需手动进交互模式 `/status` | ❌ 仅计费账单 | ❌ 盲猜 | ✅ **`codex app-server` 实时拉取 + 5min TTL 缓存 + 官方 `resetsAt`** |
+| **突破主控终端无网沙箱限制** | ❌ 每次联网命令需审批 | ✅ Stdio MCP | ⚠️ 依赖常驻浏览器 | ✅ **纯 Stdio MCP，配置一次永久无感直连** |
+| **模型分级路由 + 不支持自动回退** | ❌ 每次手写 `-m` / `-c` | ⚠️ 固定模型 | ❌ 受限于前端 DOM | ✅ **`economy / balanced / flagship / vision` + 自动回退 CLI 默认** |
+| **读图 & 原生 GPT 文生图/改图** | ⚠️ 易踩 `-i` 吞 `-` 坑 | 💰 生图单独按张计费 | ⚠️ DOM 极易失效 | ✅ **修复 `-i ... -- -` + 原生 `--enable image_generation`（0 额外费）** |
+| **多轮长对话 & 防 429 跨号串话** | ❌ 手动记 UUID `session_id` | ⚠️ 状态难跨端 | ❌ 依赖网页 Tab | ✅ **每号自动追踪 15 条命名线程，429 自动提示摘要交接** |
+| **安全写入隔离（单写原则 + Worktree）** | ⚠️ 默认权限过宽 | ❌ 无本地文件能力 | ❌ 无本地能力 | ✅ **默认 `read-only`；Git 仓库支持 `--worktree` 隔离写盘** |
+| **Windows 健壮性（进程树 / BOM / 并发）** | ⚠️ 易留孤儿进程 / 引号转义坑 | ✅ | ❌ 经常弹窗/风控 | ✅ **`taskkill /t /f` + UTF-8 stdin + `mutateRegistry` 原子重试** |
+| **安装体验（账号录入 + OAuth 授权）** | ❌ 全手工改 `config.toml` | 手填 Key | 手动维护 Profile | ✅ **`npm run setup` 5 步交互式向导，10 秒上线** |
+
+> **典型收益**：
+> - **零额外依赖、零额外 API 费**：纯 Node.js（>= 20）内置模块实现，直接复用已有的 1~N 个 ChatGPT Plus 订阅；
+> - **智能省额提速**：5 分钟额度 TTL 缓存省去重复 RPC 探测（提速 1~2s/轮），`codex_list_accounts` 自动推荐余量最足的账号（`recommendedAccount`），并可选接 **DeepSeek Flash** 做低成本全网调研与文档预消化，把宝贵的 Plus 额度留给科研推导、核心算法与代码终审。
 
 ---
 
-## 架构概览
+## 系统架构与编排工作流
+
+### 1. 系统分层架构
+
+<p align="center">
+  <img src="./assets/architecture.svg" alt="Codex Plus MCP Architecture Diagram" width="100%" />
+</p>
+
+### 2. 多模型 5 阶段协同流（内置于 Antigravity 2.0 规则模板）
 
 ```mermaid
-flowchart TD
-    Client["MCP 客户端 (Antigravity / Claude Code / Cursor)"] --> MCP["codex-plus-mcp (Zero-Dep Stdio JSON-RPC 2.0)"]
+flowchart LR
+    U["用户需求"] --> M["主控 Agent (Antigravity / Claude / Cursor)"]
 
-    subgraph Pool["隔离运行时目录 (~/.codex-plus-mcp, 独立于代码仓库)"]
-        Reg["accounts.json (原子并发读写 + 额度缓存 + 会话历史)"]
-        A1["accounts/plus-1 (独立 CODEX_HOME + auth.json)"]
-        A2["accounts/plus-2 (独立 CODEX_HOME + auth.json)"]
-        AN["accounts/plus-N (独立 CODEX_HOME + auth.json)"]
-        DSCfg["deepseek.json (可选本地密钥)"]
+    subgraph S0["Stage 0 · 前置全网调研"]
+        DS["deepseek_search / flash"] --> Cache["参考缓存区 (research-cache)"]
     end
 
-    MCP --> Reg
-    MCP -->|"codex exec --json / resume (-i, --worktree, -c)"| A1 & A2 & AN
-    MCP -->|"codex app-server (account/rateLimits/read)"| A1
-    MCP -.->|"deepseek_ask / deepseek_search + /user/balance"| DS["DeepSeek API (可选)"]
+    subgraph S1["Stage 1 · 背靠背对齐"]
+        Plan["GPT 独立方案 (仅原话+客观事实)"] --> Merge["交叉核实与 Spec 拆解"]
+    end
+
+    subgraph S2["Stage 2–3 · 分级执行与双阶段审查"]
+        Exec["tier 分级: luna / sol / astra / terra"]
+        Img["codex_generate_image (文生图 / 读图改图)"]
+        WT["独立大模块可选 --worktree"]
+        Rev["两阶段审查: Spec合规 -> P0/P1 (最多2轮)"]
+        Exec --> WT --> Rev
+        Img --> Rev
+    end
+
+    M -->|"复杂课题/工程"| DS
+    Cache -->|"精简事实包"| M
+    M -->|"大方案防锚定"| Plan
+    Merge --> Exec & Img
+    Rev -->|"核验 diff/测试 + 人话交付"| M
 ```
 
 ---
 
-## 快速开始
+## 快速开始（交互式安装与账号授权）
 
-### 1. 前置要求
-- **Node.js >= 20**（零额外 `npm install` 依赖）
+### 前置要求
+- **Node.js >= 20**（项目本身 **0 第三方 npm 依赖**，无需 `npm install`）
 - **OpenAI Codex CLI**：
   ```bash
   npm install -g @openai/codex
   ```
 - 至少 1 个 **ChatGPT Plus / Pro / Team** 官方订阅账号
 
-### 2. 克隆仓库并运行交互式安装与授权向导
+### 一步启动交互式安装与授权向导
 
 ```bash
 git clone https://github.com/Mcdull581/codex-plus-mcp.git
 cd codex-plus-mcp
+npm run setup
 ```
 
-运行安装向导（三选一）：
+> 也可以直接运行对应平台的一键脚本：
+> - **Windows PowerShell**：`powershell -ExecutionPolicy Bypass -File .\scripts\install-antigravity.ps1`
+> - **macOS / Linux**：`bash ./scripts/install-antigravity.sh`
 
-- **通用命令（Windows / macOS / Linux）**：
-  ```bash
-  npm run setup
-  ```
-- **Windows PowerShell**：
-  ```powershell
-  powershell -ExecutionPolicy Bypass -File .\scripts\install-antigravity.ps1
-  ```
-- **macOS / Linux**：
-  ```bash
-  bash ./scripts/install-antigravity.sh
-  ```
+### 安装向导会自动带你完成 5 步
 
-### 3. 安装向导会带你完成以下 5 步
-1. **选择独立数据目录**：默认为 `~/.codex-plus-mcp`（完全独立于 Git 仓库，防止误提交敏感凭据）。
-2. **录入账号数据**：输入要配置的 ChatGPT Plus 账号数量（支持 1~10 个），依次填写账号 ID（如 `plus-1`）、备注标签（如 `personal` / `work`）与可选默认模型。
-3. **逐个完成官方 OAuth 授权**：依次为未登录账号隔离 `CODEX_HOME` 并拉起 `codex login` 完成浏览器授权（登录第 2 个及以上账号时请切换浏览器账号或使用无痕窗口）。
-4. **可选配置 DeepSeek API Key**：跳过则只用 GPT/Codex；填入后会自动写入本地 `~/.codex-plus-mcp/deepseek.json` 并校验 `/user/balance` 余额。
-5. **客户端接入与自检**：一键部署为 **Antigravity 2.0 原生 Plugin**（含 MCP + Skill + Rule），同时输出标准 `mcpServers` JSON 供 Claude Code / Cursor / Windsurf 复制，最后自动运行协议自检。
+| 步骤 | 向导执行内容 | 说明 |
+| :---: | :--- | :--- |
+| **1/5** | **环境检测 & 独立目录部署** | 默认部署至 `~/.codex-plus-mcp`（与 Git 仓库物理隔离，彻底杜绝误提交密钥） |
+| **2/5** | **交互式账号数据录入** | 自由设置 1~10 个账号槽位，逐个录入 `ID`（如 `plus-1`）、备注标签（如 `personal` / `work`）与可选默认模型 |
+| **3/5** | **逐个官方 OAuth 浏览器授权** | 自动隔离 `CODEX_HOME` 并清掉 `OPENAI_API_KEY`，逐号拉起 `codex login` 完成授权（多账号时支持无痕窗口切换、失败重试或跳过补登） |
+| **4/5** | **可选配置 DeepSeek API Key** | 默认可跳过；填入后写入本地 `~/.codex-plus-mcp/deepseek.json` 并自动探测 `/user/balance` 余额 |
+| **5/5** | **一键接入客户端 & 协议自检** | 可选自动安装为 **Antigravity 2.0 原生 Plugin**（含 MCP + Skill + Rule），同时输出通用 `mcpServers` JSON，最后运行全套协议自检 |
 
-### 4. 后续随时补登 / 刷新单个账号授权
-```bash
-node ~/.codex-plus-mcp/scripts/setup.mjs --login plus-2
-```
+> **随时补登或刷新单个账号**：
+> ```bash
+> node ~/.codex-plus-mcp/scripts/setup.mjs --login plus-2
+> ```
 
 ---
 
-## 通用 MCP 客户端手动配置（非 Antigravity）
+## 8 个内置 MCP 工具
 
-如果你使用 Claude Code、Cursor、Windsurf 或其他支持 Stdio 的 MCP 客户端，只需在客户端的 MCP 配置文件中添加：
+| 工具名 | 分类 | 核心能力 | 关键参数 |
+| :--- | :--- | :--- | :--- |
+| `codex_list_accounts` | 账号与额度 | 按余量推荐排序输出 `recommendedAccount`、各号 5h/7d 额度快照、近期命名会话与 DeepSeek 余额 | `check_live_status`, `include_live_quota` |
+| `codex_manage_account` | 账号与额度 | 修改备注标签、设置默认模型、清除冷却标记或动态新增账号槽位 | `action`, `account`, `value` |
+| `codex_exec` | GPT 子 Agent | 无头启动新任务（默认 `read-only` 单写安全），支持分级路由、传图与独立 `--worktree` | `account`, `prompt`, `topic`, `working_dir`, `sandbox`, `worktree`, `images`, `tier`, `model`, `reasoning_effort` |
+| `codex_resume` | GPT 子 Agent | 在同账号既有长对话中继续追问以命中 Prompt Cache（自动识别最近 `sessionId`） | `account`, `prompt`, `session_id`, `images`, `tier`, `reasoning_effort` |
+| `codex_review` | 代码与方案审查 | 严格只读「两阶段分级审查」（阶段一 Spec 合规 + 阶段二 P0 阻断 / P1 建议，防过度吹毛求疵） | `account`, `working_dir`, `focus`, `tier`, `reasoning_effort` |
+| `codex_generate_image` | 原生生图/改图 | 启用 Codex CLI 原生 `--enable image_generation`（0 额外 API 费），支持文生图、参考图编辑、透明底与自定义保存路径，自动刷新真实 Plus 额度 | `account`, `prompt`, `output_path`, `reference_images`, `size`, `quality`, `transparent_background` |
+| `deepseek_ask` | 可选 DeepSeek | 调用 `deepseek-flash`（1M 低成本预读）或 `deepseek-v4-pro`（深度推理），支持思考模式与服务端联网，返回精确 Token 与 `/user/balance` 余额 | `prompt`, `tier`, `thinking`, `web_search`, `system_prompt` |
+| `deepseek_search` | 可选 DeepSeek | 优先调用 `/v1/tools/search`（不可用时自动降级 `deepseek-flash` 联网），输出精简带出处事实清单 | `query`, `ori_question`, `count`, `need_content`, `summarize` |
+
+---
+
+## 模型分级路由
+
+支持在 `~/.codex-plus-mcp/accounts.json` 顶层的 `modelTiers` 自定义任意模型映射：
+
+| `tier` 档位 | 默认模型 | 默认推理深度 | 推荐场景 |
+| :--- | :--- | :--- | :--- |
+| `economy` | `gpt-6-luna` | `medium` | 结构化抽取、日志解析、轻量初筛 |
+| `balanced` | `gpt-6.2-sol` | `high` | 日常模块编码、重构、常规代码审查（性价比甜点） |
+| `flagship` | `gpt-6.2-astra` | `high`（高危升 `xhigh`） | 科研证明、数学建模核心、复杂架构与疑难 Debug |
+| `vision` | `gpt-6.1-terra` | `high` | 配合 `images` 传图核验论文图表、公式与界面截图 |
+
+> **安全回退保障**：如果所选 `tier` 的模型 slug 暂不被当前账号支持，服务端会自动剥离 `-m` 回退到 Codex CLI 默认模型重试一次，并在 `subagent_meta` 中标记 `modelFallback: true`，确保绝不因模型名变更卡死。
+
+---
+
+## 进阶配置与示例
+
+<details>
+<summary><strong>1. Claude Code / Cursor / Windsurf 等通用 MCP 客户端配置</strong></summary>
+
+在你的 MCP 客户端配置文件中加入（路径替换为 `npm run setup` 输出的实际绝对路径）：
 
 ```json
 {
@@ -108,52 +185,72 @@ node ~/.codex-plus-mcp/scripts/setup.mjs --login plus-2
 }
 ```
 
-> 可选：如需通过环境变量提供 DeepSeek 密钥，可在 `env` 中增加 `"DEEPSEEK_API_KEY": "sk-..."`（或直接保存在 `~/.codex-plus-mcp/deepseek.json`）。
+如需通过环境变量提供 DeepSeek 密钥，可在 `env` 中追加 `"DEEPSEEK_API_KEY": "sk-..."`。
+
+</details>
+
+<details>
+<summary><strong>2. 原生 GPT 文生图与读图改图示例（<code>codex_generate_image</code>）</strong></summary>
+
+- **文生图并保存到指定路径**：
+  ```json
+  {
+    "account": "plus-1",
+    "prompt": "Clean Nature-style academic schematic of a dual-agent verification pipeline, crisp vector aesthetic, white background",
+    "output_path": "/path/to/project/figures/pipeline.png",
+    "size": "1536x1024",
+    "quality": "high"
+  }
+  ```
+- **先读图再改图（Image-to-Image）**：
+  ```json
+  {
+    "account": "plus-1",
+    "reference_images": ["/path/to/project/figures/draft.png"],
+    "prompt": "保留整体架构布局，将配色调整为蓝灰学术科研配色，放大节点字号并优化箭头对齐",
+    "output_path": "/path/to/project/figures/final.png"
+  }
+  ```
+
+> 每次生图约消耗 3–5× 普通轮次额度，工具会在生成结束后自动强制刷新一次官方 Plus 5h/7d 实时额度并写入 `subagent_meta`。
+
+</details>
+
+<details>
+<summary><strong>3. 离线/CI 非交互安装参数</strong></summary>
+
+`scripts/setup.mjs` 支持自动化参数，便于脚本化部署或二次集成：
+
+```bash
+node scripts/setup.mjs \
+  --non-interactive \
+  --target ~/.codex-plus-mcp \
+  --accounts '[{"id":"plus-1","label":"Personal"},{"id":"plus-2","label":"Work"}]' \
+  --skip-auth
+```
+
+</details>
 
 ---
 
-## 暴露的 MCP 工具一览
+## 隐私与安全保障
 
-| 工具名 | 作用 | 关键参数 |
-| :--- | :--- | :--- |
-| `codex_list_accounts` | 列出所有账号状态、额度快照、`recommendedAccount` 推荐排序、近期命名会话与 DeepSeek 余额 | `check_live_status`, `include_live_quota` |
-| `codex_manage_account` | 修改账号备注、设置默认模型、清除冷却标记或新增账号槽位 | `action`, `account`, `value` |
-| `codex_exec` | 启动新的无头 GPT 子 Agent 会话（默认只读 `read-only`） | `account`, `prompt`, `topic`, `working_dir`, `sandbox`, `worktree`, `images`, `tier`, `model`, `reasoning_effort` |
-| `codex_resume` | 在同账号的既有长对话中继续追问（命中 Prompt Cache） | `account`, `prompt`, `session_id`, `images`, `tier`, `reasoning_effort` |
-| `codex_review` | 严格只读的两阶段分级审查（Spec 合规 + P0 阻断 / P1 建议） | `account`, `working_dir`, `focus`, `tier`, `reasoning_effort` |
-| `deepseek_ask` | 调用 DeepSeek（`flash` / `pro` + 可选思考与服务端联网）并返回 Token 与实时余额 | `prompt`, `tier`, `thinking`, `web_search` |
-| `deepseek_search` | 调用 DeepSeek 搜索（优先 `/v1/tools/search`，自动降级 `deepseek-flash` 联网）输出带出处事实清单 | `query`, `ori_question`, `count`, `summarize` |
+1. **运行时数据与源码物理隔离**：所有 `auth.json`、`accounts.json`、`deepseek.json`、会话日志与生成图片默认存放在仓库外的 `~/.codex-plus-mcp/`，从根源避免 `git add .` 泄露个人凭据。
+2. **严格 `.gitignore` 兜底**：已屏蔽 `accounts/`、`accounts.json`、`auth.json`、`deepseek.json`、`.env` 等所有敏感路径。
+3. **强制走 Plus 订阅防误扣费**：拉起 Codex 子进程时自动清除 `OPENAI_API_KEY`，杜绝意外触发按量 API 账单。
+4. **单写原则（Single-Writer）**：默认锁定 `--sandbox read-only`，仅在显式授权 `sandbox: "workspace-write"` 或 Git 仓库开启 `worktree: true` 时才允许写入。
 
 ---
 
-## 模型分级路由（默认映射）
-
-可在 `~/.codex-plus-mcp/accounts.json` 顶层的 `modelTiers` 字段自定义覆盖：
-
-| `tier` 档位 | 默认模型 | 默认推理深度 | 典型场景 |
-| :--- | :--- | :--- | :--- |
-| `economy` | `gpt-6-luna` | `medium` | 结构化抽取、日志解析、轻量初筛 |
-| `balanced` | `gpt-6.2-sol` | `high` | 日常代码实现、常规审查 |
-| `flagship` | `gpt-6.2-astra` | `high`（高危升 `xhigh`） | 科研证明、数学建模核心、复杂架构/疑难 Debug |
-| `vision` | `gpt-6.1-terra` | `high` | 配合 `images` 传图核验图表/公式/截图 |
-
-> 若所选 `tier` 对应的模型 slug 当前账号暂不支持，服务端会自动去掉 `-m` 回退到 Codex CLI 默认模型重试，不会中断任务。
-
----
-
-## 隐私与安全说明
-
-1. **凭据与代码彻底分离**：默认数据目录在用户主目录 `~/.codex-plus-mcp/`，所有 OAuth 凭据（`auth.json`）、本地账号表（`accounts.json`）与可选 `deepseek.json` 均不会写入本仓库目录。
-2. **`.gitignore` 强制兜底**：已忽略 `accounts/`、`accounts.json`、`auth.json`、`deepseek.json`、`.env` 等所有敏感文件，防止误提交。
-3. **默认单写原则**：`codex_exec` 默认以 `--sandbox read-only` 运行，只有显式传 `sandbox: "workspace-write"` 或在 Git 仓库中开启 `worktree: true` 时才允许写入。
-
----
-
-## 运行测试
+## 测试验证
 
 ```bash
 npm test
 ```
+
+内置测试套件覆盖：MCP 协议握手、8 工具 Schema、余量推荐排序、5 路并发原子写 `mutateRegistry`、`images` / `worktree` / DeepSeek 守卫、Mock Codex CLI 端到端 `-i ... -- -` + `--enable image_generation` 拷贝与强制额度刷新、以及 `setup.mjs` 账号录入向导。
+
+---
 
 ## License
 

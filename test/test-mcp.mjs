@@ -80,7 +80,7 @@ function assert(cond, msg) {
 }
 
 // ---------------------------------------------------------------------------
-// Suite A: Protocol Handshake, Tool Schemas, Ranking, Concurrency & Guards
+// Suite A: Isolated Server Functional Suite (v3.3.0)
 // ---------------------------------------------------------------------------
 async function runIsolatedServerSuite() {
   const tmpHome = path.join(os.tmpdir(), `codex-mcp-oss-test-${crypto.randomUUID()}`);
@@ -152,11 +152,11 @@ async function runIsolatedServerSuite() {
     const initRes = await client.rpc("initialize", {
       protocolVersion: "2024-11-05",
       capabilities: {},
-      clientInfo: { name: "oss-test", version: "3.2.0" },
+      clientInfo: { name: "oss-test", version: "3.3.0" },
     });
     assert(initRes.result?.serverInfo?.name === "codex-plus-bridge", "serverInfo.name mismatch");
-    assert(initRes.result?.serverInfo?.version === "3.2.0", "serverInfo.version mismatch");
-    console.log("[PASS] initialize: codex-plus-bridge@3.2.0");
+    assert(initRes.result?.serverInfo?.version === "3.3.0", `expected 3.3.0, got ${initRes.result?.serverInfo?.version}`);
+    console.log("[PASS] initialize: codex-plus-bridge@3.3.0");
 
     client.notify("notifications/initialized");
 
@@ -169,14 +169,17 @@ async function runIsolatedServerSuite() {
       "codex_exec",
       "codex_resume",
       "codex_review",
+      "codex_generate_image",
       "deepseek_ask",
       "deepseek_search",
     ]) {
       assert(toolNames.includes(req), `missing tool ${req}`);
     }
     const execProps = tools.find((t) => t.name === "codex_exec").inputSchema.properties;
-    assert(execProps.images && execProps.worktree && execProps.tier && execProps.reasoning_effort, "missing v3.2 schema props");
-    console.log("[PASS] tools/list & v3.2 schemas verified (7 tools)");
+    assert(execProps.images && execProps.worktree && execProps.tier && execProps.reasoning_effort, "missing codex_exec props");
+    const genProps = tools.find((t) => t.name === "codex_generate_image").inputSchema.properties;
+    assert(genProps.account && genProps.prompt && genProps.output_path && genProps.reference_images && genProps.transparent_background, "missing codex_generate_image props");
+    console.log("[PASS] tools/list & v3.3.0 schemas verified (8 tools)");
 
     const rankRes = await client.rpc("tools/call", {
       name: "codex_list_accounts",
@@ -228,8 +231,133 @@ async function runIsolatedServerSuite() {
     assert(Boolean(dsAsk.result?.isError) && dsAsk.result.content[0].text.includes("deepseek.json"), "deepseek_ask guard failed");
     assert(Boolean(dsSearch.result?.isError) && dsSearch.result.content[0].text.includes("DEEPSEEK_API_KEY"), "deepseek_search guard failed");
     console.log("[PASS] DeepSeek unconfigured-key guards verified");
+
+    const emptyGen = await client.rpc("tools/call", {
+      name: "codex_generate_image",
+      arguments: { account: "plus-1", prompt: "  " },
+    });
+    assert(Boolean(emptyGen.result?.isError), "empty prompt should fail");
+    const badRefGen = await client.rpc("tools/call", {
+      name: "codex_generate_image",
+      arguments: { account: "plus-1", prompt: "restyle", reference_images: [path.join(tmpHome, "missing-ref.png")] },
+    });
+    assert(Boolean(badRefGen.result?.isError), "missing reference image should fail");
+    console.log("[PASS] codex_generate_image input guards verified");
   } finally {
     client.close();
+  }
+
+  // End-to-end mock Codex CLI test for `-i ... -- -`, `--enable image_generation`, file copy & forced quota
+  const mockCodexJs = path.join(tmpHome, "mock-codex.cjs");
+  const sampleRefImg = path.join(tmpHome, "ref-input.png");
+  const targetOutImg = path.join(tmpHome, "out", "final-figure.png");
+  fs.writeFileSync(sampleRefImg, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  fs.writeFileSync(
+    mockCodexJs,
+    `
+const fs = require("fs");
+const path = require("path");
+const args = process.argv.slice(2);
+if (args[0] === "app-server") {
+  process.stdin.on("data", (buf) => {
+    const lines = buf.toString("utf8").split(/\\r?\\n/).filter(Boolean);
+    for (const line of lines) {
+      const m = JSON.parse(line);
+      if (m.id === 1) {
+        process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id: 1, result: { ok: true } }) + "\\n");
+      } else if (m.id === 2) {
+        process.stdout.write(JSON.stringify({
+          jsonrpc: "2.0",
+          id: 2,
+          result: {
+            ordinaryUsageAllowed: true,
+            rateLimits: {
+              planType: "plus",
+              primary: { usedPercent: 18, windowDurationMins: 300, resetsAt: Math.floor(Date.now()/1000) + 7200 },
+              secondary: { usedPercent: 22, windowDurationMins: 10080, resetsAt: Math.floor(Date.now()/1000) + 86400 }
+            }
+          }
+        }) + "\\n");
+      }
+    }
+  });
+  return;
+}
+const idxI = args.indexOf("-i");
+const idxDashDash = args.indexOf("--");
+const idxStdin = args.lastIndexOf("-");
+if (idxI === -1 || idxDashDash === -1 || !(idxI < idxDashDash && idxDashDash < idxStdin)) {
+  console.error("Invalid -i / -- / - order: " + JSON.stringify(args));
+  process.exit(2);
+}
+if (!args.includes("--enable") || !args.includes("image_generation")) {
+  console.error("Missing --enable image_generation: " + JSON.stringify(args));
+  process.exit(3);
+}
+const outIdx = args.indexOf("-o");
+const outTxt = outIdx >= 0 ? args[outIdx + 1] : null;
+const genDir = path.join(process.env.CODEX_HOME, "generated_images", "thread-img-test");
+fs.mkdirSync(genDir, { recursive: true });
+const genPng = path.join(genDir, "ig_001.png");
+fs.writeFileSync(genPng, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x42]));
+if (outTxt) fs.writeFileSync(outTxt, "Generated diagram successfully.", "utf8");
+process.stdout.write(JSON.stringify({ type: "thread.started", thread_id: "thread-img-test" }) + "\\n");
+process.stdout.write(JSON.stringify({
+  type: "item.completed",
+  item: {
+    type: "imageGeneration",
+    id: "ig_1",
+    status: "completed",
+    savedPath: genPng,
+    revisedPrompt: "Clean academic vector schematic"
+  }
+}) + "\\n");
+process.stdout.write(JSON.stringify({
+  type: "turn.completed",
+  usage: { input_tokens: 1200, cached_input_tokens: 200, output_tokens: 350, total_tokens: 1550 }
+}) + "\\n");
+process.exit(0);
+`,
+    "utf8"
+  );
+
+  const mockClient = createMcpClient({
+    CODEX_BRIDGE_HOME: tmpHome,
+    CODEX_JS_PATH: mockCodexJs,
+    DEEPSEEK_API_KEY: "",
+  });
+  try {
+    await mockClient.rpc("initialize", {
+      protocolVersion: "2024-11-05",
+      capabilities: {},
+      clientInfo: { name: "mock-image-test", version: "3.3.0" },
+    });
+    mockClient.notify("notifications/initialized");
+
+    const genRes = await mockClient.rpc("tools/call", {
+      name: "codex_generate_image",
+      arguments: {
+        account: "plus-1",
+        prompt: "Redraw this schematic in clean academic style",
+        reference_images: [sampleRefImg],
+        output_path: targetOutImg,
+        size: "1536x1024",
+        quality: "high",
+      },
+    });
+    assert(!genRes.result?.isError, `mock codex_generate_image failed: ${genRes.result?.content?.[0]?.text}`);
+    assert(fs.existsSync(targetOutImg), "generated image not copied to output_path");
+    const outText = genRes.result.content[0].text;
+    const metaMatch = outText.match(/<!-- subagent_meta:(\{[\s\S]*?\}) -->/);
+    assert(Boolean(metaMatch), "missing subagent_meta");
+    const meta = JSON.parse(metaMatch[1]);
+    assert(meta.provider === "codex-plus-image", "wrong provider tag");
+    assert(meta.imageCount === 1, "expected imageCount=1");
+    assert(meta.generatedFiles?.[0] === path.resolve(targetOutImg), "generatedFiles mismatch");
+    assert(meta.quota?.primary?.usedPercent === 18, "forced live quota mismatch");
+    console.log("[PASS] end-to-end -i -- - + --enable image_generation + copy + forced quota verified");
+  } finally {
+    mockClient.close();
     try {
       fs.rmSync(tmpHome, { recursive: true, force: true });
     } catch {}
@@ -273,7 +401,7 @@ function runSetupWizardSuite() {
     assert(reg.accounts["acc-main"]?.label === "Personal", "acc-main label mismatch");
     assert(reg.accounts["acc-alt"]?.label === "Work", "acc-alt label mismatch");
     assert(reg.accounts["acc-alt"]?.defaultModel === "gpt-6.2-sol", "acc-alt model mismatch");
-    console.log("[PASS] setup.mjs onboarding wizard verified (account data entry + isolated CODEX_HOME creation)");
+    console.log("[PASS] setup.mjs onboarding wizard verified (account entry + isolated CODEX_HOME)");
   } finally {
     try {
       fs.rmSync(tmpTarget, { recursive: true, force: true });
@@ -283,4 +411,4 @@ function runSetupWizardSuite() {
 
 await runIsolatedServerSuite();
 runSetupWizardSuite();
-console.log("\nALL STANDALONE MCP TESTS PASSED!");
+console.log("\nALL STANDALONE v3.3.0 MCP TESTS PASSED!");

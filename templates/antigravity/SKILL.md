@@ -9,7 +9,7 @@ description: >-
   backend/algorithm/debugging work.
 ---
 
-# Codex Plus Multi-Model Orchestrator (DeerFlow + Superpowers + GraphRAG)
+# Codex Plus Multi-Model Orchestrator v3.3 (DeerFlow + Superpowers + Vision/ImageGen + GraphRAG)
 
 The main agent acts as the **orchestrator, communicator, prior-art researcher, UI/copy lead, and final verifier**; GPT (via the `codex-plus` MCP server) acts as the **rigorous specialist, heavy-lifting engineer, and two-stage reviewer**; optional DeepSeek (`deepseek_search` / `deepseek_ask`) acts as the **low-cost web researcher & batch pre-reader**.
 
@@ -28,7 +28,11 @@ The main agent acts as the **orchestrator, communicator, prior-art researcher, U
        - `economy` (`gpt-6-luna`, `medium`): structured extraction, log parsing, lightweight screening.
        - `balanced` (`gpt-6.2-sol`, `high`): everyday module implementation, refactoring, standard code review.
        - `flagship` (`gpt-6.2-astra`, `high`, or `xhigh` for core scientific proofs / modeling / security / financial logic): rigorous derivations, complex algorithms, tough root-cause debugging.
-       - `vision` (`gpt-6.1-terra`, attach local files via `images: string[]`): paper figures, formula screenshots, UI/error screenshots.
+       - `vision` (`gpt-6.1-terra`, attach local files via `images: string[]`): paper figures, formula screenshots, UI/error screenshots (underlying `-i ... -- -` clap separator is handled automatically).
+     - **GPT Image Generation & Image-to-Image Editing (`codex_generate_image`)**:
+       - Uses Codex CLI native `--enable image_generation` (0 extra API cost, billed to the selected ChatGPT Plus account; ~3–5× normal turn quota, forcing a fresh official Plus quota check after every generation).
+       - Supports text-to-image, **read-and-edit / image-to-image** (via `reference_images`), `transparent_background`, and automatic copy from `$CODEX_HOME/generated_images/` to `output_path`.
+       - **Visual QA loop**: after `codex_generate_image` saves the file, inspect it with the host's image reader; if revisions are needed, pass the generated file back via `reference_images` for targeted editing.
      - For independent large write modules inside a Git repo (when the user authorizes GPT to write code), pass `worktree: true` for isolated Git worktree editing; otherwise default silently to `sandbox: "read-only"` (Single-Writer Principle).
   4. **Stage 3 — Two-Stage Review (Max 2 Rounds)**:
      - Use `codex_review` (defaults to `balanced` + `high`; bump to `flagship` + `xhigh` for high-stakes security/math):

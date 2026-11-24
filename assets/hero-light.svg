@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320" role="img" aria-label="Codex Plus MCP Hero Banner Light">
+  <defs>
+    <linearGradient id="bgLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="50%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#EEF2FF"/>
+    </linearGradient>
+    <radialGradient id="glowCyanL" cx="18%" cy="22%" r="50%">
+      <stop offset="0%" stop-color="#0EA5E9" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#0EA5E9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowVioletL" cx="85%" cy="78%" r="50%">
+      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accentGradL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="50%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="iconGradL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+    <pattern id="gridLight" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#CBD5E1" stroke-width="0.7" stroke-opacity="0.5"/>
+    </pattern>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1200" height="320" rx="20" fill="url(#bgLight)"/>
+  <rect width="1200" height="320" rx="20" fill="url(#gridLight)"/>
+  <rect width="1200" height="320" rx="20" fill="url(#glowCyanL)"/>
+  <rect width="1200" height="320" rx="20" fill="url(#glowVioletL)"/>
+  <rect x="1" y="1" width="1198" height="318" rx="19" fill="none" stroke="#CBD5E1" stroke-width="1.5"/>
+
+  <!-- Geometric Emblem -->
+  <g transform="translate(88, 76)">
+    <rect x="0" y="0" width="104" height="104" rx="24" fill="#FFFFFF" stroke="url(#iconGradL)" stroke-width="2.5"/>
+    <polygon points="52,18 82,35 82,69 52,86 22,69 22,35" fill="none" stroke="url(#accentGradL)" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="52" cy="52" r="10" fill="url(#iconGradL)"/>
+    <circle cx="52" cy="22" r="5" fill="#0284C7"/>
+    <circle cx="78" cy="67" r="5" fill="#059669"/>
+    <circle cx="26" cy="67" r="5" fill="#6366F1"/>
+    <line x1="52" y1="42" x2="52" y2="27" stroke="#0284C7" stroke-width="2"/>
+    <line x1="60" y1="57" x2="73" y2="64" stroke="#059669" stroke-width="2"/>
+    <line x1="44" y1="57" x2="31" y2="64" stroke="#6366F1" stroke-width="2"/>
+  </g>
+
+  <!-- Title & Tagline -->
+  <text x="224" y="122" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="#0F172A" letter-spacing="-1">
+    Codex Plus <tspan fill="url(#accentGradL)">MCP</tspan>
+  </text>
+  <rect x="615" y="88" width="84" height="28" rx="14" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.2"/>
+  <text x="657" y="107" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="700" fill="#0369A1">v3.3.0</text>
+
+  <text x="224" y="160" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="500" fill="#334155">
+    Zero-Dependency Multi-Account ChatGPT Plus Orchestrator for Antigravity, Claude Code &amp; Cursor
+  </text>
+  <text x="224" y="188" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#64748B">
+    Official Headless Codex CLI · Isolated CODEX_HOME Pool · Real 5h/7d Quota · Native Image Gen · Optional DeepSeek
+  </text>
+
+  <!-- Feature Pills -->
+  <g transform="translate(88, 228)" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12.5" font-weight="600">
+    <rect x="0" y="0" width="142" height="34" rx="17" fill="#FFFFFF" stroke="#0284C7" stroke-opacity="0.45"/>
+    <text x="71" y="22" text-anchor="middle" fill="#0369A1">0 Dependencies</text>
+
+    <rect x="156" y="0" width="168" height="34" rx="17" fill="#FFFFFF" stroke="#059669" stroke-opacity="0.45"/>
+    <text x="240" y="22" text-anchor="middle" fill="#047857">N× Plus Isolation</text>
+
+    <rect x="338" y="0" width="166" height="34" rx="17" fill="#FFFFFF" stroke="#4F46E5" stroke-opacity="0.45"/>
+    <text x="421" y="22" text-anchor="middle" fill="#4338CA">Real 5h/7d Quota</text>
+
+    <rect x="518" y="0" width="174" height="34" rx="17" fill="#FFFFFF" stroke="#D97706" stroke-opacity="0.45"/>
+    <text x="605" y="22" text-anchor="middle" fill="#B45309">Tiered Model Route</text>
+
+    <rect x="706" y="0" width="154" height="34" rx="17" fill="#FFFFFF" stroke="#DB2777" stroke-opacity="0.45"/>
+    <text x="783" y="22" text-anchor="middle" fill="#BE185D">Vision &amp; Img Gen</text>
+
+    <rect x="874" y="0" width="150" height="34" rx="17" fill="#FFFFFF" stroke="#2563EB" stroke-opacity="0.45"/>
+    <text x="949" y="22" text-anchor="middle" fill="#1D4ED8">DeepSeek Ready</text>
+  </g>
+</svg>
